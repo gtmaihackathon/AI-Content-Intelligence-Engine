@@ -8,19 +8,13 @@ import validators
 
 
 def render_upload_section() -> Tuple[List[Dict], List[str]]:
-    """
-    Render the content upload section
-    
-    Returns:
-        Tuple of (uploaded_files_data, urls_to_process)
-    """
+    """Render the content upload section"""
     st.header("📥 Content Upload")
     st.markdown("Upload your content assets for analysis. Supports PDFs, documents, and URLs.")
     
     uploaded_files = []
     urls = []
     
-    # Create tabs for different upload methods
     tab1, tab2, tab3 = st.tabs(["📄 Upload Files", "🔗 Add URLs", "📋 Batch Import"])
     
     with tab1:
@@ -46,7 +40,6 @@ def render_upload_section() -> Tuple[List[Dict], List[str]]:
             
             st.success(f"✅ {len(files)} file(s) ready for analysis")
             
-            # Show preview of uploaded files
             with st.expander("View uploaded files"):
                 for f in files:
                     st.markdown(f"- **{f.name}** ({f.type}, {f.size/1024:.1f} KB)")
@@ -55,7 +48,6 @@ def render_upload_section() -> Tuple[List[Dict], List[str]]:
         st.markdown("### Add Website URLs")
         st.markdown("Enter blog posts, landing pages, or any web content URLs")
         
-        # Single URL input
         single_url = st.text_input(
             "Enter URL",
             placeholder="https://example.com/blog/article-title",
@@ -69,7 +61,6 @@ def render_upload_section() -> Tuple[List[Dict], List[str]]:
             else:
                 st.error("❌ Invalid URL format")
         
-        # Multiple URLs
         st.markdown("---")
         st.markdown("**Or paste multiple URLs (one per line):**")
         
@@ -95,7 +86,7 @@ def render_upload_section() -> Tuple[List[Dict], List[str]]:
     
     with tab3:
         st.markdown("### Batch Import")
-        st.markdown("Upload a CSV or TXT file with URLs or file paths")
+        st.markdown("Upload a CSV or TXT file with URLs")
         
         batch_file = st.file_uploader(
             "Upload batch file",
@@ -106,38 +97,9 @@ def render_upload_section() -> Tuple[List[Dict], List[str]]:
         if batch_file:
             content = batch_file.read().decode("utf-8")
             lines = [l.strip() for l in content.split("\n") if l.strip()]
-            
             batch_urls = [l for l in lines if validators.url(l)]
             urls.extend(batch_urls)
-            
             st.success(f"✅ Found {len(batch_urls)} URL(s) in batch file")
-    
-    # Content type tagging
-    st.markdown("---")
-    st.markdown("### Content Type Classification")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        default_type = st.selectbox(
-            "Default content type for uploads",
-            options=[
-                "auto_detect",
-                "blog_post",
-                "case_study",
-                "whitepaper",
-                "ebook",
-                "sales_deck",
-                "email_template",
-                "landing_page",
-                "product_sheet"
-            ],
-            index=0,
-            key="default_content_type"
-        )
-    
-    with col2:
-        st.info("💡 Content types will be auto-detected when possible, or use your default selection.")
     
     # Summary
     st.markdown("---")
@@ -151,10 +113,8 @@ def render_upload_section() -> Tuple[List[Dict], List[str]]:
         col2.metric("URLs", len(urls))
         col3.metric("Total", total_items)
         
-        # Store in session state
         st.session_state["pending_files"] = uploaded_files
-        st.session_state["pending_urls"] = list(set(urls))  # Remove duplicates
-        st.session_state["default_content_type"] = default_type
+        st.session_state["pending_urls"] = list(set(urls))
     else:
         st.info("📌 Upload files or add URLs above to begin analysis")
     
@@ -167,16 +127,14 @@ def _detect_content_type(filename: str) -> str:
     
     if "case" in filename_lower and "study" in filename_lower:
         return "case_study"
-    elif "whitepaper" in filename_lower or "white-paper" in filename_lower:
+    elif "whitepaper" in filename_lower:
         return "whitepaper"
-    elif "ebook" in filename_lower or "e-book" in filename_lower:
+    elif "ebook" in filename_lower:
         return "ebook"
     elif "deck" in filename_lower or "presentation" in filename_lower:
         return "sales_deck"
-    elif "email" in filename_lower or "template" in filename_lower:
+    elif "email" in filename_lower:
         return "email_template"
-    elif "product" in filename_lower and "sheet" in filename_lower:
-        return "product_sheet"
     elif filename_lower.endswith(".pdf"):
         return "document"
     else:
@@ -190,7 +148,6 @@ def render_persona_upload() -> List[Dict]:
     
     persona_files = []
     
-    # Upload section
     files = st.file_uploader(
         "Upload persona research (PDF, TXT, DOCX)",
         type=["pdf", "txt", "docx", "md"],
@@ -216,11 +173,11 @@ def render_persona_upload() -> List[Dict]:
         with col1:
             persona_name = st.text_input("Persona Name", placeholder="e.g., CMO Sarah")
             persona_role = st.text_input("Role/Title", placeholder="e.g., Chief Marketing Officer")
-            persona_desc = st.text_area("Description", placeholder="Brief description of this persona")
+            persona_desc = st.text_area("Description", placeholder="Brief description")
         
         with col2:
-            pain_points = st.text_area("Pain Points (one per line)", placeholder="Proving marketing ROI\nScaling content operations")
-            goals = st.text_area("Goals (one per line)", placeholder="Drive revenue growth\nBuild brand awareness")
+            pain_points = st.text_area("Pain Points (one per line)", placeholder="Proving ROI\nScaling operations")
+            goals = st.text_area("Goals (one per line)", placeholder="Drive growth\nBuild awareness")
         
         if st.button("Add Persona", key="add_manual_persona"):
             if persona_name:
@@ -235,7 +192,6 @@ def render_persona_upload() -> List[Dict]:
                 if "manual_personas" not in st.session_state:
                     st.session_state["manual_personas"] = []
                 st.session_state["manual_personas"].append(manual_persona)
-                
                 st.success(f"✅ Added persona: {persona_name}")
             else:
                 st.error("Please enter a persona name")
@@ -247,9 +203,6 @@ def render_persona_upload() -> List[Dict]:
             with st.expander(f"📌 {persona['name']}"):
                 st.markdown(f"**Role:** {persona.get('role', 'N/A')}")
                 st.markdown(f"**Description:** {persona.get('description', 'N/A')}")
-                st.markdown(f"**Pain Points:** {', '.join(persona.get('pain_points', []))}")
-                st.markdown(f"**Goals:** {', '.join(persona.get('goals', []))}")
-                
                 if st.button(f"Remove", key=f"remove_persona_{i}"):
                     st.session_state["manual_personas"].pop(i)
                     st.rerun()
