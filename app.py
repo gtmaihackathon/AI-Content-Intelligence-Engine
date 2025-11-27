@@ -1,6 +1,6 @@
 """
 AI Content Intelligence Engine - Main Application
-A comprehensive content analysis and strategy platform
+Using OpenAI GPT-4 API
 """
 
 import streamlit as st
@@ -13,7 +13,7 @@ load_dotenv()
 # Import configuration
 from config import (
     APP_TITLE, APP_DESCRIPTION, SIDEBAR_PAGES,
-    DEFAULT_PERSONAS, FUNNEL_STAGES, ANTHROPIC_API_KEY
+    DEFAULT_PERSONAS, FUNNEL_STAGES, OPENAI_API_KEY
 )
 
 # Import utilities
@@ -52,12 +52,6 @@ st.markdown("""
         font-size: 1.1rem;
         color: #666;
         margin-bottom: 2rem;
-    }
-    .metric-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 1rem;
-        border-radius: 10px;
-        color: white;
     }
     .stProgress > div > div > div > div {
         background-color: #667eea;
@@ -100,11 +94,11 @@ def render_sidebar():
     st.sidebar.markdown("---")
     
     # API Key Status
-    if ANTHROPIC_API_KEY:
-        st.sidebar.success("✅ API Connected")
+    if OPENAI_API_KEY:
+        st.sidebar.success("✅ OpenAI API Connected")
     else:
         st.sidebar.error("❌ API Key Missing")
-        st.sidebar.markdown("Add `ANTHROPIC_API_KEY` to .env file")
+        st.sidebar.markdown("Add `OPENAI_API_KEY` to .env file")
     
     st.sidebar.markdown("---")
     
@@ -127,7 +121,7 @@ def render_sidebar():
         if st.sidebar.button(label, key=f"nav_{page_id}", use_container_width=True):
             st.session_state.current_page = page_id
     
-    # Quick stats if content analyzed
+    # Quick stats
     if st.session_state.analyzed_content:
         render_quick_stats(st.session_state.analyzed_content)
     
@@ -144,7 +138,6 @@ def render_home():
     st.markdown('<p class="main-header">🧠 AI Content Intelligence Engine</p>', unsafe_allow_html=True)
     st.markdown('<p class="sub-header">Analyze, classify, and optimize your content strategy with AI</p>', unsafe_allow_html=True)
     
-    # Feature cards
     col1, col2, col3 = st.columns(3)
     
     with col1:
@@ -182,7 +175,6 @@ def render_home():
     
     st.markdown("---")
     
-    # Getting Started
     st.markdown("### 🚀 Getting Started")
     
     col1, col2 = st.columns(2)
@@ -190,38 +182,30 @@ def render_home():
     with col1:
         st.markdown("""
         **Step 1: Upload Persona Research**
-        Upload your persona PDFs or add personas manually to enable
-        persona-based content analysis.
+        Upload your persona PDFs or add personas manually.
         
         **Step 2: Add Content Assets**
-        Upload PDFs, documents, or paste URLs of your existing content
-        (blogs, case studies, sales assets).
+        Upload PDFs, documents, or paste URLs.
         
         **Step 3: Run Analysis**
-        Click Analyze to classify all content by persona, funnel stage,
-        and get improvement recommendations.
+        Click Analyze to classify all content.
         """)
     
     with col2:
         st.markdown("""
         **Step 4: Review Gap Matrix**
-        See visual heatmap of content coverage across all personas
-        and funnel stages. Identify priority gaps.
+        See visual heatmap of content coverage.
         
         **Step 5: Get Strategy Recommendations**
-        AI generates a quarterly content plan with specific content
-        to create, improvements, and calendar.
+        AI generates a quarterly content plan.
         
         **Step 6: Use Persona Chat**
-        Ask questions about personas when creating content or
-        preparing for prospect calls.
+        Ask questions about personas.
         """)
     
-    # Status Overview
     if st.session_state.analyzed_content:
         st.markdown("---")
         st.markdown("### 📈 Current Analysis Status")
-        
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Personas", len(st.session_state.personas))
         col2.metric("Content Analyzed", len(st.session_state.analyzed_content))
@@ -233,7 +217,6 @@ def render_persona_setup_page():
     """Render persona setup page"""
     persona_files = render_persona_upload()
     
-    # Process uploaded persona files
     if persona_files:
         if st.button("🔍 Extract Personas from Documents", type="primary"):
             with st.spinner("Extracting personas..."):
@@ -254,12 +237,10 @@ def render_persona_setup_page():
                 st.session_state.personas = persona_manager.get_all_personas()
                 st.success(f"✅ Extracted {len(st.session_state.personas)} personas!")
     
-    # Add manual personas
     if st.session_state.manual_personas:
         st.session_state.persona_manager.add_personas(st.session_state.manual_personas)
         st.session_state.personas = st.session_state.persona_manager.get_all_personas()
     
-    # Use defaults button
     st.markdown("---")
     if st.button("📋 Use Default Personas"):
         st.session_state.persona_manager.load_default_personas()
@@ -267,7 +248,6 @@ def render_persona_setup_page():
         st.success("Loaded default personas!")
         st.rerun()
     
-    # Show current personas
     if st.session_state.personas:
         st.markdown("---")
         st.markdown("### Current Personas")
@@ -295,8 +275,6 @@ def render_funnel_config_page():
 def render_content_upload_page():
     """Render content upload page"""
     uploaded_files, urls = render_upload_section()
-    
-    # Store in session state
     st.session_state.pending_files = uploaded_files
     st.session_state.pending_urls = urls
 
@@ -331,7 +309,6 @@ def render_analyze_page():
         progress_bar = st.progress(0)
         status_text = st.empty()
         
-        # Initialize analyzers
         content_analyzer = ContentAnalyzer(personas)
         gap_analyzer = GapAnalyzer(personas)
         gap_analyzer.set_personas(personas)
@@ -382,14 +359,12 @@ def render_analyze_page():
         
         # Run AI analysis
         status_text.text("Running AI analysis...")
-        
         analyzed = content_analyzer.batch_analyze(all_content)
         st.session_state.analyzed_content = analyzed
         st.session_state.content_analyzer = content_analyzer
         
         # Run gap analysis
         status_text.text("Analyzing content gaps...")
-        
         coverage = gap_analyzer.analyze_coverage(analyzed)
         st.session_state.coverage_matrix = coverage
         st.session_state.gaps = gap_analyzer.get_gaps()
@@ -397,7 +372,6 @@ def render_analyze_page():
         
         # Generate strategy
         status_text.text("Generating content strategy...")
-        
         strategy = st.session_state.strategy_generator.generate_strategy(
             gaps=st.session_state.gaps,
             strengths=gap_analyzer.get_strengths(),
@@ -443,13 +417,8 @@ def render_analysis_dashboard_page():
         st.warning("No content analyzed yet. Please run analysis first.")
         return
     
-    # Get summary from analyzer
     content_analyzer = st.session_state.content_analyzer
-    if content_analyzer:
-        summary = content_analyzer.get_analysis_summary()
-    else:
-        summary = {}
-    
+    summary = content_analyzer.get_analysis_summary() if content_analyzer else {}
     render_analysis_dashboard(analyzed_content, summary)
 
 
@@ -464,18 +433,14 @@ def render_gap_matrix_page():
         return
     
     summary = gap_analyzer.get_summary_stats() if gap_analyzer else {}
-    
     render_gap_matrix(coverage_matrix, gaps, summary)
     
     st.markdown("---")
     
-    # Additional analysis views
     if gap_analyzer:
         tab1, tab2 = st.tabs(["📊 By Stage", "👥 By Persona"])
-        
         with tab1:
             render_stage_analysis(gap_analyzer.get_stage_summary())
-        
         with tab2:
             render_persona_analysis(gap_analyzer.get_persona_summary())
 
@@ -492,8 +457,6 @@ def render_content_strategy_page():
     render_strategy_view(strategy, personas)
     
     st.markdown("---")
-    
-    # Content brief generator
     render_content_brief_generator(
         st.session_state.strategy_generator,
         personas,
@@ -505,7 +468,6 @@ def render_persona_chat_page():
     """Render persona chat page"""
     persona_manager = st.session_state.persona_manager
     
-    # Make sure personas are loaded
     if st.session_state.personas and not persona_manager.get_all_personas():
         persona_manager.add_personas(st.session_state.personas)
     
@@ -513,12 +475,10 @@ def render_persona_chat_page():
     
     st.markdown("---")
     
-    # Additional tools
     tab1, tab2 = st.tabs(["⚖️ Compare Personas", "📝 Content Advisor"])
     
     with tab1:
         render_comparison_tool(persona_manager)
-    
     with tab2:
         render_content_advisor(persona_manager)
 
@@ -528,7 +488,6 @@ def main():
     initialize_session_state()
     render_sidebar()
     
-    # Route to current page
     page = st.session_state.current_page
     
     if page == "home":
