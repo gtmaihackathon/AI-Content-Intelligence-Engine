@@ -12,7 +12,7 @@ class PersonaManager:
     """Manages persona data and persona-related AI operations"""
     
     def __init__(self):
-        self.client = Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
+        self.client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
         self.personas: List[Dict[str, Any]] = []
         self.persona_texts: Dict[str, str] = {}  # Store raw text for chat
     
