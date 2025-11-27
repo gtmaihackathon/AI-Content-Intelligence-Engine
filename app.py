@@ -1,3 +1,12 @@
+import streamlit as st
+
+# Test secret reading
+try:
+    api_key = st.secrets["OPENAI_API_KEY"]
+    st.success(f"✅ API Key found: {api_key[:20]}...")
+except Exception as e:
+    st.error(f"❌ Error reading secret: {e}")
+
 """
 AI Content Intelligence Engine - Main Application
 Using OpenAI GPT-4 API
