@@ -7,15 +7,21 @@ from typing import Dict, List, Optional, Any
 from anthropic import Anthropic
 from config import OPENAI_API_KEY, MODEL_NAME, DEFAULT_PERSONAS
 
-# Get API key from Streamlit secrets
-try:
-    OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
-except (FileNotFoundError, KeyError):
-    import os
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 class PersonaManager:
     """Manages persona data and persona-related AI operations"""
+
+    class PersonaManager:
+    def __init__(self):
+        # Get API key when the class is instantiated, not at import time
+        try:
+            api_key = st.secrets["OPENAI_API_KEY"]
+        except (FileNotFoundError, KeyError):
+            api_key = os.getenv("OPENAI_API_KEY")
+        
+        if not api_key:
+            st.error("❌ API Key Missing: Add `OPENAI_API_KEY` to .streamlit/secrets.toml")
+            st.stop()
     
     def __init__(self):
         self.client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
