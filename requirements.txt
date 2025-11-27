@@ -1,1 +1,14 @@
-requirements.txt
+streamlit>=1.28.0
+anthropic>=0.18.0
+python-dotenv>=1.0.0
+pdfplumber>=0.10.0
+pypdf>=3.17.0
+beautifulsoup4>=4.12.0
+requests>=2.31.0
+pandas>=2.1.0
+plotly>=5.18.0
+altair>=5.2.0
+numpy>=1.26.0
+validators>=0.22.0
+trafilatura>=1.6.0
+lxml>=5.0.0
