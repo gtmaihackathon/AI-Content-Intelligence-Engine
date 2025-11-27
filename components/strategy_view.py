@@ -5,17 +5,11 @@ Strategy View Component - Displays content strategy recommendations
 import streamlit as st
 import pandas as pd
 from typing import Dict, List
-import plotly.express as px
+import json
 
 
 def render_strategy_view(strategy: Dict, personas: List[Dict]):
-    """
-    Render the content strategy recommendations view
-    
-    Args:
-        strategy: Strategy recommendations from StrategyGenerator
-        personas: List of personas
-    """
+    """Render the content strategy recommendations view"""
     st.header("📈 Content Strategy Recommendations")
     
     if not strategy:
@@ -37,7 +31,7 @@ def render_strategy_view(strategy: Dict, personas: List[Dict]):
     
     st.markdown("---")
     
-    # Priority Content to Create
+    # Priority Content
     st.markdown("### 🎯 Priority Content to Create")
     _render_priority_content(strategy.get("priority_content_to_create", []))
     
@@ -49,29 +43,17 @@ def render_strategy_view(strategy: Dict, personas: List[Dict]):
     
     st.markdown("---")
     
-    # Persona-Specific Recommendations
+    # Persona Recommendations
     st.markdown("### 👥 Persona-Specific Recommendations")
     _render_persona_recommendations(strategy.get("persona_specific_recommendations", {}))
     
     st.markdown("---")
     
-    # Content Improvements
-    st.markdown("### 🔧 Content Improvements")
-    _render_improvements(strategy.get("content_improvements", []))
-    
-    st.markdown("---")
-    
-    # Long-term Initiatives
-    st.markdown("### 🚀 Long-term Initiatives")
-    _render_initiatives(strategy.get("long_term_initiatives", []))
-    
-    st.markdown("---")
-    
-    # Metrics to Track
+    # Metrics
     st.markdown("### 📊 Metrics to Track")
     _render_metrics(strategy.get("metrics_to_track", []))
     
-    # Export Option
+    # Export
     st.markdown("---")
     st.markdown("### 📤 Export Strategy")
     _render_export_options(strategy)
@@ -83,12 +65,10 @@ def _render_priority_content(content_list: List[Dict]):
         st.info("No priority content recommendations available")
         return
     
-    # Group by priority
     high_priority = [c for c in content_list if c.get("priority") == "high"]
     medium_priority = [c for c in content_list if c.get("priority") == "medium"]
     low_priority = [c for c in content_list if c.get("priority") == "low"]
     
-    # Tabs for priority levels
     tab1, tab2, tab3 = st.tabs([
         f"🔴 High Priority ({len(high_priority)})",
         f"🟠 Medium Priority ({len(medium_priority)})",
@@ -97,10 +77,8 @@ def _render_priority_content(content_list: List[Dict]):
     
     with tab1:
         _render_content_cards(high_priority)
-    
     with tab2:
         _render_content_cards(medium_priority)
-    
     with tab3:
         _render_content_cards(low_priority)
 
@@ -120,16 +98,13 @@ def _render_content_cards(content_list: List[Dict]):
                 st.markdown(f"**Target Persona:** {content.get('target_persona', 'Unknown')}")
                 st.markdown(f"**Funnel Stage:** {content.get('funnel_stage', 'Unknown').title()}")
                 st.markdown(f"**Effort:** {content.get('estimated_effort', 'Unknown')}")
-                
                 st.markdown("**Rationale:**")
                 st.markdown(content.get('rationale', 'N/A'))
             
             with col2:
                 st.markdown("**Key Topics:**")
-                topics = content.get('key_topics', [])
-                for topic in topics:
+                for topic in content.get('key_topics', []):
                     st.markdown(f"- {topic}")
-                
                 st.markdown("**Suggested Angle:**")
                 st.markdown(content.get('suggested_angle', 'N/A'))
 
@@ -140,9 +115,7 @@ def _render_quarterly_calendar(calendar: Dict):
         st.info("No calendar data available")
         return
     
-    # Display as tabs for each month
     months = list(calendar.keys())
-    
     if not months:
         st.info("Calendar not populated")
         return
@@ -152,12 +125,10 @@ def _render_quarterly_calendar(calendar: Dict):
     for i, month in enumerate(months):
         with tabs[i]:
             month_content = calendar.get(month, [])
-            
             if not month_content:
                 st.info(f"No content planned for {month}")
                 continue
             
-            # Create DataFrame for display
             df_data = []
             for item in month_content:
                 df_data.append({
@@ -189,62 +160,11 @@ def _render_persona_recommendations(recommendations: Dict):
                 st.markdown("**Content Priorities:**")
                 for p in rec.get("content_priorities", []):
                     st.markdown(f"- {p}")
-                
+            
+            with col2:
                 st.markdown("**Messaging Themes:**")
                 for t in rec.get("messaging_themes", []):
                     st.markdown(f"- {t}")
-            
-            with col2:
-                st.markdown("**Content Types to Focus:**")
-                types = rec.get("content_types_to_focus", [])
-                if types:
-                    # Visualize as tags
-                    st.markdown(" ".join([f"`{t}`" for t in types]))
-
-
-def _render_improvements(improvements: List[Dict]):
-    """Render content improvement recommendations"""
-    if not improvements:
-        st.info("No improvement recommendations available")
-        return
-    
-    for imp in improvements:
-        with st.container():
-            col1, col2 = st.columns([3, 1])
-            
-            with col1:
-                st.markdown(f"**{imp.get('content_area', 'Area')}**")
-                st.markdown(f"*Issue:* {imp.get('current_issue', 'N/A')}")
-                st.markdown(f"*Recommendation:* {imp.get('recommendation', 'N/A')}")
-            
-            with col2:
-                impact = imp.get('impact', 'Unknown')
-                if 'high' in impact.lower():
-                    st.success(f"Impact: {impact}")
-                elif 'medium' in impact.lower():
-                    st.warning(f"Impact: {impact}")
-                else:
-                    st.info(f"Impact: {impact}")
-            
-            st.markdown("---")
-
-
-def _render_initiatives(initiatives: List[Dict]):
-    """Render long-term initiatives"""
-    if not initiatives:
-        st.info("No long-term initiatives defined")
-        return
-    
-    for init in initiatives:
-        with st.expander(f"🎯 {init.get('initiative', 'Initiative')}"):
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.markdown(f"**Timeline:** {init.get('timeline', 'TBD')}")
-                st.markdown(f"**Resources Needed:** {init.get('resources_needed', 'TBD')}")
-            
-            with col2:
-                st.markdown(f"**Expected Outcome:** {init.get('expected_outcome', 'TBD')}")
 
 
 def _render_metrics(metrics: List[Dict]):
@@ -257,7 +177,6 @@ def _render_metrics(metrics: List[Dict]):
     
     for i, metric in enumerate(metrics):
         col_idx = i % len(cols)
-        
         with cols[col_idx]:
             st.markdown(f"**📊 {metric.get('metric', 'Metric')}**")
             st.markdown(f"*Why:* {metric.get('why', 'N/A')}")
@@ -269,8 +188,6 @@ def _render_export_options(strategy: Dict):
     col1, col2 = st.columns(2)
     
     with col1:
-        # Export as JSON
-        import json
         strategy_json = json.dumps(strategy, indent=2)
         st.download_button(
             label="📥 Download as JSON",
@@ -280,7 +197,6 @@ def _render_export_options(strategy: Dict):
         )
     
     with col2:
-        # Export summary as text
         summary_text = _generate_text_summary(strategy)
         st.download_button(
             label="📥 Download Summary",
@@ -324,30 +240,20 @@ def render_content_brief_generator(strategy_generator, personas: List[Dict], ana
     """Render content brief generator"""
     st.markdown("### 📝 Generate Content Brief")
     
-    # Select from priority content
-    content_titles = ["Custom..."] + [
-        c.get("title", "Untitled")
-        for c in st.session_state.get("strategy", {}).get("priority_content_to_create", [])
-    ]
+    content_titles = ["Custom..."]
+    strategy = st.session_state.get("strategy", {})
+    content_list = strategy.get("priority_content_to_create", [])
+    content_titles += [c.get("title", "Untitled") for c in content_list]
     
     selected = st.selectbox("Select content to brief", content_titles)
     
     if selected == "Custom...":
         custom_title = st.text_input("Enter content title")
         content_type = st.selectbox("Content type", ["blog_post", "case_study", "whitepaper", "video"])
-        
-        content_rec = {
-            "title": custom_title,
-            "type": content_type
-        }
+        content_rec = {"title": custom_title, "type": content_type}
     else:
-        content_rec = next(
-            (c for c in st.session_state.get("strategy", {}).get("priority_content_to_create", [])
-             if c.get("title") == selected),
-            {}
-        )
+        content_rec = next((c for c in content_list if c.get("title") == selected), {})
     
-    # Select persona
     persona_names = [p.get("name", "Unknown") for p in personas]
     selected_persona_name = st.selectbox("Target persona", persona_names)
     selected_persona = next((p for p in personas if p.get("name") == selected_persona_name), {})
@@ -363,7 +269,6 @@ def render_content_brief_generator(strategy_generator, personas: List[Dict], ana
         st.markdown("### Generated Brief")
         st.markdown(brief)
         
-        # Download option
         st.download_button(
             label="📥 Download Brief",
             data=brief,
