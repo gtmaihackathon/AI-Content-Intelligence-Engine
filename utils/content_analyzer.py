@@ -1,18 +1,19 @@
 """
 Content Analyzer - Analyzes and classifies content assets
+Using OpenAI API
 """
 
 import json
-from typing import Dict, List, Optional, Any
-from anthropic import Anthropic
-from config import ANTHROPIC_API_KEY, MODEL_NAME, FUNNEL_STAGES, CONTENT_TYPES
+from typing import Dict, List, Any
+from openai import OpenAI
+from config import OPENAI_API_KEY, MODEL_NAME, FUNNEL_STAGES, CONTENT_TYPES
 
 
 class ContentAnalyzer:
     """Analyzes content and classifies by persona, funnel stage, and intent"""
     
     def __init__(self, personas: List[Dict] = None):
-        self.client = Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
+        self.client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
         self.personas = personas or []
         self.funnel_stages = FUNNEL_STAGES
         self.analyzed_content: List[Dict] = []
@@ -22,19 +23,10 @@ class ContentAnalyzer:
         self.personas = personas
     
     def analyze_content(self, content: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Analyze a single content piece
-        
-        Args:
-            content: Dict with 'title', 'content', 'source', 'type' keys
-            
-        Returns:
-            Analysis results including persona mapping, funnel stage, etc.
-        """
+        """Analyze a single content piece"""
         if not self.client:
             return self._fallback_analysis(content)
         
-        # Build persona list for prompt
         persona_names = [p.get("name", "Unknown") for p in self.personas]
         persona_details = "\n".join([
             f"- {p.get('name')}: {p.get('description', '')}. Pain points: {', '.join(p.get('pain_points', []))}"
@@ -81,29 +73,26 @@ Analyze this content and return a JSON object with:
 Return ONLY valid JSON."""
 
         try:
-            response = self.client.messages.create(
+            response = self.client.chat.completions.create(
                 model=MODEL_NAME,
+                messages=[{"role": "user", "content": prompt}],
                 max_tokens=2000,
-                messages=[{"role": "user", "content": prompt}]
+                temperature=0.3
             )
             
-            response_text = response.content[0].text
+            response_text = response.choices[0].message.content
             
-            # Clean up response
             if "```json" in response_text:
                 response_text = response_text.split("```json")[1].split("```")[0]
             elif "```" in response_text:
                 response_text = response_text.split("```")[1].split("```")[0]
             
             analysis = json.loads(response_text.strip())
-            
-            # Add original content metadata
             analysis["original_title"] = content.get("title")
             analysis["original_source"] = content.get("source")
             analysis["word_count"] = len(content.get("content", "").split())
             
             return analysis
-            
         except Exception as e:
             print(f"Analysis error: {e}")
             return self._fallback_analysis(content)
@@ -113,22 +102,19 @@ Return ONLY valid JSON."""
         text = content.get("content", "").lower()
         title = content.get("title", "").lower()
         
-        # Simple keyword-based classification
         awareness_keywords = ["what is", "introduction", "guide", "tips", "how to start", "basics"]
         consideration_keywords = ["compare", "vs", "alternative", "solution", "platform", "tool"]
         decision_keywords = ["case study", "testimonial", "pricing", "demo", "trial", "buy"]
         
-        # Determine funnel stage
         funnel_stage = "awareness"
         if any(kw in text or kw in title for kw in decision_keywords):
             funnel_stage = "decision"
         elif any(kw in text or kw in title for kw in consideration_keywords):
             funnel_stage = "consideration"
         
-        # Basic persona scoring
         persona_scores = {}
         for persona in self.personas:
-            score = 50  # Default score
+            score = 50
             persona_keywords = persona.get("pain_points", []) + persona.get("goals", [])
             for keyword in persona_keywords:
                 if keyword.lower() in text:
@@ -170,23 +156,19 @@ Return ONLY valid JSON."""
         if not self.analyzed_content:
             return {"error": "No content analyzed yet"}
         
-        # Count by funnel stage
         stage_counts = {"awareness": 0, "consideration": 0, "decision": 0}
         for content in self.analyzed_content:
             stage = content.get("funnel_stage", "awareness")
             stage_counts[stage] = stage_counts.get(stage, 0) + 1
         
-        # Count by persona
         persona_counts = {}
         for content in self.analyzed_content:
             persona = content.get("primary_persona", "Unknown")
             persona_counts[persona] = persona_counts.get(persona, 0) + 1
         
-        # Average quality score
         quality_scores = [c.get("quality_score", 50) for c in self.analyzed_content]
         avg_quality = sum(quality_scores) / len(quality_scores) if quality_scores else 0
         
-        # Content types
         type_counts = {}
         for content in self.analyzed_content:
             ctype = content.get("content_type", "unknown")
