@@ -5,7 +5,7 @@ Persona Manager - Handles persona data extraction, storage, and retrieval
 import json
 from typing import Dict, List, Optional, Any
 from anthropic import Anthropic
-from config import ANTHROPIC_API_KEY, MODEL_NAME, DEFAULT_PERSONAS
+from config import OPENAI_API_KEY, MODEL_NAME, DEFAULT_PERSONAS
 
 
 class PersonaManager:
