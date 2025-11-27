@@ -1,18 +1,19 @@
 """
 Strategy Generator - Generates AI-powered content strategy recommendations
+Using OpenAI API
 """
 
 import json
 from typing import Dict, List, Any
-from anthropic import Anthropic
-from config import ANTHROPIC_API_KEY, MODEL_NAME, FUNNEL_STAGES, CONTENT_TYPES
+from openai import OpenAI
+from config import OPENAI_API_KEY, MODEL_NAME, FUNNEL_STAGES, CONTENT_TYPES
 
 
 class StrategyGenerator:
     """Generates content strategy recommendations using AI"""
     
     def __init__(self):
-        self.client = Anthropic(api_key=ANTHROPIC_API_KEY) if ANTHROPIC_API_KEY else None
+        self.client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
     
     def generate_strategy(
         self,
@@ -22,26 +23,13 @@ class StrategyGenerator:
         analyzed_content: List[Dict],
         coverage_matrix: Dict
     ) -> Dict:
-        """
-        Generate comprehensive content strategy recommendations
-        
-        Args:
-            gaps: List of identified gaps
-            strengths: List of strong coverage areas
-            personas: List of personas
-            analyzed_content: All analyzed content
-            coverage_matrix: Full coverage matrix
-            
-        Returns:
-            Strategy recommendations
-        """
+        """Generate comprehensive content strategy recommendations"""
         if not self.client:
             return self._fallback_strategy(gaps, strengths, personas)
         
-        # Build context for AI
         gaps_summary = "\n".join([
             f"- {g['persona']} at {g['stage_name']} stage (priority: {g['priority']})"
-            for g in gaps[:10]  # Top 10 gaps
+            for g in gaps[:10]
         ])
         
         strengths_summary = "\n".join([
@@ -106,8 +94,8 @@ Generate a detailed content strategy with the following structure. Return as JSO
                 "target_persona": "persona"
             }}
         ],
-        "month_2": [...],
-        "month_3": [...]
+        "month_2": [],
+        "month_3": []
     }},
     
     "persona_specific_recommendations": {{
@@ -119,9 +107,7 @@ Generate a detailed content strategy with the following structure. Return as JSO
         }}
     }},
     
-    "quick_wins": [
-        "list of easy-to-implement improvements"
-    ],
+    "quick_wins": ["list of easy-to-implement improvements"],
     
     "long_term_initiatives": [
         {{
@@ -141,19 +127,19 @@ Generate a detailed content strategy with the following structure. Return as JSO
     ]
 }}
 
-Provide specific, actionable recommendations. Focus on filling the highest-priority gaps while leveraging existing strengths.
+Provide specific, actionable recommendations. Focus on filling the highest-priority gaps.
 Return ONLY valid JSON."""
 
         try:
-            response = self.client.messages.create(
+            response = self.client.chat.completions.create(
                 model=MODEL_NAME,
+                messages=[{"role": "user", "content": prompt}],
                 max_tokens=4000,
-                messages=[{"role": "user", "content": prompt}]
+                temperature=0.5
             )
             
-            response_text = response.content[0].text
+            response_text = response.choices[0].message.content
             
-            # Clean up response
             if "```json" in response_text:
                 response_text = response_text.split("```json")[1].split("```")[0]
             elif "```" in response_text:
@@ -161,17 +147,14 @@ Return ONLY valid JSON."""
             
             strategy = json.loads(response_text.strip())
             return strategy
-            
         except Exception as e:
             print(f"Strategy generation error: {e}")
             return self._fallback_strategy(gaps, strengths, personas)
     
     def _fallback_strategy(self, gaps: List[Dict], strengths: List[Dict], personas: List[Dict]) -> Dict:
         """Generate basic strategy without AI"""
-        
-        # Generate content recommendations based on gaps
         priority_content = []
-        for gap in gaps[:5]:  # Top 5 gaps
+        for gap in gaps[:5]:
             content_type = "blog_post"
             if gap["stage"] == "decision":
                 content_type = "case_study"
@@ -191,39 +174,14 @@ Return ONLY valid JSON."""
             })
         
         return {
-            "executive_summary": f"Analysis identified {len(gaps)} content gaps and {len(strengths)} strong coverage areas. Priority should be given to creating content for the highest-priority gaps.",
+            "executive_summary": f"Analysis identified {len(gaps)} content gaps and {len(strengths)} strong coverage areas.",
             "priority_content_to_create": priority_content,
-            "content_improvements": [
-                {
-                    "content_area": "General",
-                    "current_issue": "AI analysis unavailable for detailed recommendations",
-                    "recommendation": "Review content manually for improvement opportunities",
-                    "impact": "Variable"
-                }
-            ],
-            "quarterly_calendar": {
-                "month_1": [],
-                "month_2": [],
-                "month_3": []
-            },
-            "persona_specific_recommendations": {
-                p["name"]: {
-                    "key_insight": "Manual analysis recommended",
-                    "content_priorities": [],
-                    "messaging_themes": [],
-                    "content_types_to_focus": []
-                }
-                for p in personas
-            },
-            "quick_wins": ["Review and update existing content titles and meta descriptions"],
+            "content_improvements": [],
+            "quarterly_calendar": {"month_1": [], "month_2": [], "month_3": []},
+            "persona_specific_recommendations": {},
+            "quick_wins": ["Review and update existing content titles"],
             "long_term_initiatives": [],
-            "metrics_to_track": [
-                {
-                    "metric": "Content per persona/stage",
-                    "why": "Ensure coverage across all segments",
-                    "target": "3-5 pieces per cell"
-                }
-            ]
+            "metrics_to_track": [{"metric": "Content per persona/stage", "why": "Coverage", "target": "3-5 pieces"}]
         }
     
     def generate_content_brief(
@@ -232,17 +190,7 @@ Return ONLY valid JSON."""
         persona: Dict,
         existing_content: List[Dict] = None
     ) -> str:
-        """
-        Generate a detailed content brief for a specific piece
-        
-        Args:
-            content_recommendation: The content piece to create
-            persona: Target persona details
-            existing_content: Related existing content for reference
-            
-        Returns:
-            Detailed content brief
-        """
+        """Generate a detailed content brief for a specific piece"""
         if not self.client:
             return "API not available. Please create brief manually."
         
@@ -282,67 +230,13 @@ Generate a comprehensive content brief including:
 Provide actionable, specific guidance."""
 
         try:
-            response = self.client.messages.create(
+            response = self.client.chat.completions.create(
                 model=MODEL_NAME,
+                messages=[{"role": "user", "content": prompt}],
                 max_tokens=2000,
-                messages=[{"role": "user", "content": prompt}]
+                temperature=0.7
             )
             
-            return response.content[0].text
-            
+            return response.choices[0].message.content
         except Exception as e:
             return f"Error generating brief: {str(e)}"
-    
-    def suggest_content_repurposing(self, content: Dict, target_formats: List[str] = None) -> List[Dict]:
-        """
-        Suggest ways to repurpose existing content
-        
-        Args:
-            content: Analyzed content piece
-            target_formats: Desired output formats
-            
-        Returns:
-            List of repurposing suggestions
-        """
-        if not self.client:
-            return []
-        
-        target_formats = target_formats or ["social_media", "email", "video_script", "infographic"]
-        
-        prompt = f"""Suggest ways to repurpose the following content:
-
-ORIGINAL CONTENT:
-Title: {content.get('original_title', 'Untitled')}
-Type: {content.get('content_type', 'unknown')}
-Summary: {content.get('summary', 'N/A')}
-Key Messages: {', '.join(content.get('key_messages', []))}
-
-TARGET FORMATS: {', '.join(target_formats)}
-
-For each format, provide:
-1. Suggested title/hook
-2. Key points to include
-3. Estimated effort
-4. Best platform/channel
-
-Return as JSON array of objects with format, title, key_points, effort, channel fields."""
-
-        try:
-            response = self.client.messages.create(
-                model=MODEL_NAME,
-                max_tokens=1500,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            
-            response_text = response.content[0].text
-            
-            if "```json" in response_text:
-                response_text = response_text.split("```json")[1].split("```")[0]
-            elif "```" in response_text:
-                response_text = response_text.split("```")[1].split("```")[0]
-            
-            return json.loads(response_text.strip())
-            
-        except Exception as e:
-            print(f"Repurposing suggestion error: {e}")
-            return []
