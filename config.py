@@ -8,9 +8,9 @@ import streamlit as st
 # API Configuration - Using OpenAI
 # Try Streamlit secrets first, then fall back to environment variable
 try:
-    OPENAI_API_KEY = st.secrets["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"]
+    OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 except:
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "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")
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
 MODEL_NAME = "gpt-4o"  # Options: "gpt-4o", "gpt-4o-mini", "gpt-4-turbo"
 
