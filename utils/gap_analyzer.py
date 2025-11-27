@@ -32,28 +32,18 @@ class GapAnalyzer:
                     "content_items": [],
                     "avg_quality": 0,
                     "coverage_score": 0,
-                    "status": "gap"  # gap, moderate, strong
+                    "status": "gap"
                 }
     
     def analyze_coverage(self, analyzed_content: List[Dict]) -> Dict:
-        """
-        Analyze content coverage across persona/funnel matrix
-        
-        Args:
-            analyzed_content: List of analyzed content items
-            
-        Returns:
-            Coverage matrix with gap analysis
-        """
+        """Analyze content coverage across persona/funnel matrix"""
         self._initialize_matrix()
         
-        # Map content to matrix cells
         for content in analyzed_content:
             primary_persona = content.get("primary_persona", "Unknown")
             stage = content.get("funnel_stage", "awareness")
             quality = content.get("quality_score", 50)
             
-            # Add to primary persona
             if primary_persona in self.coverage_matrix:
                 if stage in self.coverage_matrix[primary_persona]:
                     cell = self.coverage_matrix[primary_persona][stage]
@@ -64,42 +54,34 @@ class GapAnalyzer:
                         "quality": quality
                     })
             
-            # Also add to secondary personas with lower weight
             for secondary_persona in content.get("secondary_personas", []):
                 if secondary_persona in self.coverage_matrix:
                     if stage in self.coverage_matrix[secondary_persona]:
                         cell = self.coverage_matrix[secondary_persona][stage]
-                        cell["content_count"] += 0.5  # Partial credit
+                        cell["content_count"] += 0.5
         
-        # Calculate coverage scores and status
         self._calculate_scores()
-        
         return self.coverage_matrix
     
     def _calculate_scores(self):
         """Calculate coverage scores for each cell"""
-        max_content_per_cell = 5  # Ideal content pieces per cell
+        max_content_per_cell = 5
         
         for persona_name in self.coverage_matrix:
             for stage in self.coverage_matrix[persona_name]:
                 cell = self.coverage_matrix[persona_name][stage]
-                
-                # Calculate coverage score (0-100)
                 content_score = min(100, (cell["content_count"] / max_content_per_cell) * 100)
                 
-                # Calculate average quality
                 if cell["content_items"]:
                     qualities = [item["quality"] for item in cell["content_items"]]
                     cell["avg_quality"] = sum(qualities) / len(qualities)
                 else:
                     cell["avg_quality"] = 0
                 
-                # Combine content quantity and quality
                 cell["coverage_score"] = round(
                     (content_score * 0.6) + (cell["avg_quality"] * 0.4), 1
                 )
                 
-                # Determine status
                 if cell["coverage_score"] >= self.thresholds["strong"]:
                     cell["status"] = "strong"
                 elif cell["coverage_score"] >= self.thresholds["moderate"]:
@@ -124,21 +106,17 @@ class GapAnalyzer:
                         "priority": self._calculate_priority(persona_name, stage, cell)
                     })
         
-        # Sort by priority (highest first)
         gaps.sort(key=lambda x: x["priority"], reverse=True)
         return gaps
     
     def _calculate_priority(self, persona_name: str, stage: str, cell: Dict) -> int:
         """Calculate gap priority score"""
-        priority = 100 - cell["coverage_score"]  # Base priority
+        priority = 100 - cell["coverage_score"]
         
-        # Boost priority for decision stage (closer to revenue)
         if stage == "decision":
             priority += 20
         elif stage == "consideration":
             priority += 10
-        
-        # Could add persona importance weighting here
         
         return min(100, priority)
     
@@ -156,13 +134,13 @@ class GapAnalyzer:
                         "stage_name": FUNNEL_STAGES.get(stage, {}).get("name", stage),
                         "coverage_score": cell["coverage_score"],
                         "content_count": cell["content_count"],
-                        "top_content": cell["content_items"][:3]  # Top 3 items
+                        "top_content": cell["content_items"][:3]
                     })
         
         return strengths
     
     def get_moderate_areas(self) -> List[Dict]:
-        """Get areas with moderate coverage that could be improved"""
+        """Get areas with moderate coverage"""
         moderate = []
         
         for persona_name in self.coverage_matrix:
