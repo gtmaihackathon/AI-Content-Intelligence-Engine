@@ -7,9 +7,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# API Configuration
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-MODEL_NAME = "claude-sonnet-4-20250514"
+# API Configuration - Using OpenAI
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+MODEL_NAME = "gpt-4o"  # Options: "gpt-4o", "gpt-4o-mini", "gpt-4-turbo"
 
 # Default Personas (can be overridden by user uploads)
 DEFAULT_PERSONAS = [
@@ -74,9 +74,9 @@ CONTENT_TYPES = {
 
 # Analysis Thresholds
 SCORING_THRESHOLDS = {
-    "strong": 70,      # >= 70% = strong coverage
-    "moderate": 40,    # >= 40% = moderate coverage
-    "gap": 0           # < 40% = gap identified
+    "strong": 70,
+    "moderate": 40,
+    "gap": 0
 }
 
 # UI Configuration
@@ -91,17 +91,4 @@ SIDEBAR_PAGES = [
     ("🔲 Gap Matrix", "gap_matrix"),
     ("📈 Content Strategy", "content_strategy"),
     ("💬 Persona Chat", "persona_chat")
-]
-
-# Export all config
-__all__ = [
-    "ANTHROPIC_API_KEY",
-    "MODEL_NAME",
-    "DEFAULT_PERSONAS",
-    "FUNNEL_STAGES",
-    "CONTENT_TYPES",
-    "SCORING_THRESHOLDS",
-    "APP_TITLE",
-    "APP_DESCRIPTION",
-    "SIDEBAR_PAGES"
 ]
