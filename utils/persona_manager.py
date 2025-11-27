@@ -3,15 +3,16 @@ Persona Manager - Handles persona data extraction, storage, and retrieval
 """
 
 import json
+import streamlit as st
+import os
 from typing import Dict, List, Optional, Any
-from anthropic import Anthropic
-from config import OPENAI_API_KEY, MODEL_NAME, DEFAULT_PERSONAS
+from openai import OpenAI
+from config import MODEL_NAME, DEFAULT_PERSONAS
 
 
 class PersonaManager:
     """Manages persona data and persona-related AI operations"""
-
-    class PersonaManager:
+    
     def __init__(self):
         # Get API key when the class is instantiated, not at import time
         try:
@@ -22,9 +23,8 @@ class PersonaManager:
         if not api_key:
             st.error("❌ API Key Missing: Add `OPENAI_API_KEY` to .streamlit/secrets.toml")
             st.stop()
-    
-    def __init__(self):
-        self.client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+        
+        self.client = OpenAI(api_key=api_key)
         self.personas: List[Dict[str, Any]] = []
         self.persona_texts: Dict[str, str] = {}  # Store raw text for chat
     
@@ -69,14 +69,14 @@ Document text:
 Return ONLY valid JSON, no other text."""
 
         try:
-            response = self.client.messages.create(
-                model=MODEL_NAME,
-                max_tokens=4000,
-                messages=[{"role": "user", "content": prompt}]
+            response = self.client.chat.completions.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=4000
             )
             
             # Parse response
-            response_text = response.content[0].text
+            response_text = response.choices[0].message.content
             
             # Clean up response if needed
             if "```json" in response_text:
@@ -205,7 +205,7 @@ Return ONLY valid JSON, no other text."""
             AI response about personas
         """
         if not self.client:
-            return "API key not configured. Please set ANTHROPIC_API_KEY."
+            return "API key not configured. Please set OPENAI_API_KEY."
         
         if not self.personas:
             return "No personas loaded. Please upload persona research first."
@@ -219,7 +219,7 @@ Return ONLY valid JSON, no other text."""
             for name, text in self.persona_texts.items()
         ])
         
-        system_prompt = f"""You are a helpful persona research assistant. You have detailed knowledge about the following buyer personas:
+        system_message = f"""You are a helpful persona research assistant. You have detailed knowledge about the following buyer personas:
 
 {persona_context}
 
@@ -235,18 +235,21 @@ Help users understand these personas to create better content and sales material
 
 Be specific and actionable in your responses. Reference the actual persona data when answering."""
 
-        messages = conversation_history or []
+        messages = [{"role": "system", "content": system_message}]
+        
+        if conversation_history:
+            messages.extend(conversation_history)
+        
         messages.append({"role": "user", "content": query})
         
         try:
-            response = self.client.messages.create(
-                model=MODEL_NAME,
-                max_tokens=2000,
-                system=system_prompt,
-                messages=messages
+            response = self.client.chat.completions.create(
+                model="gpt-4",
+                messages=messages,
+                max_tokens=2000
             )
             
-            return response.content[0].text
+            return response.choices[0].message.content
             
         except Exception as e:
             return f"Error getting response: {str(e)}"
