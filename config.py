@@ -3,15 +3,18 @@ Configuration settings for AI Content Intelligence Engine
 """
 
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
+import streamlit as st
 
 # API Configuration - Using OpenAI
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+# Try Streamlit secrets first, then fall back to environment variable
+try:
+    OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+except:
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+
 MODEL_NAME = "gpt-4o"  # Options: "gpt-4o", "gpt-4o-mini", "gpt-4-turbo"
 
-# Default Personas (can be overridden by user uploads)
+# Default Personas
 DEFAULT_PERSONAS = [
     {
         "name": "CMO / VP Marketing",
@@ -55,7 +58,7 @@ FUNNEL_STAGES = {
     }
 }
 
-# Content Types with Metadata
+# Content Types
 CONTENT_TYPES = {
     "blog_post": {"icon": "📝", "typical_stage": "awareness"},
     "case_study": {"icon": "📊", "typical_stage": "decision"},
