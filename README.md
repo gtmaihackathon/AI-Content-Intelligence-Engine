@@ -1,6 +1,6 @@
 # 🧠 AI Content Intelligence Engine
 
-A powerful AI-driven content analysis and strategy platform that helps marketing and sales teams understand content performance, identify gaps, and create data-driven content strategies.
+A powerful AI-driven content analysis and strategy platform using **OpenAI GPT-4**.
 
 ## 🎯 Features
 
@@ -11,35 +11,9 @@ A powerful AI-driven content analysis and strategy platform that helps marketing
 - **Content Strategy Recommendations**: AI-generated quarterly content plans
 - **Persona Chat Agent**: Interactive AI agent trained on your persona research
 
-## 📁 Project Structure
-
-```
-content-intelligence-engine/
-├── app.py                      # Main Streamlit application
-├── requirements.txt            # Python dependencies
-├── config.py                   # Configuration settings
-├── utils/
-│   ├── __init__.py
-│   ├── content_analyzer.py     # Content analysis logic
-│   ├── persona_manager.py      # Persona data handling
-│   ├── gap_analyzer.py         # Gap analysis engine
-│   ├── strategy_generator.py   # Content strategy AI
-│   ├── pdf_processor.py        # PDF extraction utilities
-│   └── web_scraper.py          # URL content extraction
-├── components/
-│   ├── __init__.py
-│   ├── upload_section.py       # File upload UI
-│   ├── analysis_dashboard.py   # Analysis results display
-│   ├── gap_matrix.py           # Gap visualization
-│   ├── persona_chat.py         # Persona chat interface
-│   └── strategy_view.py        # Strategy recommendations UI
-└── data/
-    └── .gitkeep                # Placeholder for data files
-```
-
 ## 🚀 Quick Start
 
-### Step 1: Clone the Repository
+### Step 1: Clone/Download the Project
 
 ```bash
 git clone https://github.com/yourusername/content-intelligence-engine.git
@@ -50,7 +24,7 @@ cd content-intelligence-engine
 
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 ```
 
 ### Step 3: Install Dependencies
@@ -61,16 +35,17 @@ pip install -r requirements.txt
 
 ### Step 4: Set Up API Key
 
-Create a `.env` file in the project root:
-
 ```bash
-ANTHROPIC_API_KEY=your_api_key_here
+# Copy example env file
+cp env.example .env
+
+# Edit .env and add your OpenAI API key
+# Get your key from: https://platform.openai.com/api-keys
 ```
 
-Or set it as an environment variable:
-
-```bash
-export ANTHROPIC_API_KEY=your_api_key_here
+Your `.env` file should look like:
+```
+OPENAI_API_KEY=sk-your-api-key-here
 ```
 
 ### Step 5: Run the Application
@@ -79,115 +54,63 @@ export ANTHROPIC_API_KEY=your_api_key_here
 streamlit run app.py
 ```
 
-The app will open in your browser at `http://localhost:8501`
+Open your browser at `http://localhost:8501`
 
 ## 📖 How to Use
 
-### 1. Upload Persona Research
+| Step | Page | What to Do |
+|------|------|------------|
+| 1 | 📋 Persona Setup | Upload persona research PDFs or add personas manually |
+| 2 | 📥 Content Upload | Upload blogs, case studies, PDFs, or paste URLs |
+| 3 | 🔍 Analyze | Click "Run Analysis" to classify all content |
+| 4 | 📊 Dashboard | View content inventory, quality scores, charts |
+| 5 | 🔲 Gap Matrix | See heatmap of coverage gaps by persona/stage |
+| 6 | 📈 Strategy | Get AI-generated quarterly content plan |
+| 7 | 💬 Persona Chat | Ask questions about personas for content/sales |
 
-- Navigate to **"📋 Persona Setup"** in the sidebar
-- Upload your persona research PDF(s)
-- The system will extract and structure persona data
+## 📁 Project Structure
 
-### 2. Define Funnel Stages
-
-- Go to **"🎯 Funnel Configuration"**
-- Customize your funnel stages (default: Awareness, Consideration, Decision)
-- Add stage descriptions and content type mappings
-
-### 3. Add Content Assets
-
-- Go to **"📥 Content Upload"**
-- Choose input method:
-  - **URLs**: Paste blog/website URLs
-  - **PDFs**: Upload case studies, whitepapers
-  - **Documents**: Upload sales assets, email templates
-- Batch upload supported
-
-### 4. Run Analysis
-
-- Click **"🔍 Analyze Content"**
-- View results in the **"📊 Analysis Dashboard"**:
-  - Content inventory with classifications
-  - Persona mapping scores
-  - Funnel stage distribution
-
-### 5. View Gap Analysis
-
-- Navigate to **"🔲 Gap Matrix"**
-- See visual heatmap of content coverage
-- Identify missing persona/stage combinations
-
-### 6. Get Strategy Recommendations
-
-- Go to **"📈 Content Strategy"**
-- View AI-generated recommendations:
-  - Priority content to create
-  - Content improvement suggestions
-  - Quarterly content calendar
-
-### 7. Chat with Persona Agent
-
-- Open **"💬 Persona Chat"**
-- Ask questions like:
-  - "What are CFO Emma's main pain points?"
-  - "What content resonates with technical buyers?"
-  - "How should I position this feature for SMB owners?"
+```
+content-intelligence-engine/
+├── app.py                      # Main Streamlit application
+├── config.py                   # Configuration settings
+├── requirements.txt            # Python dependencies
+├── env.example                 # Environment variables template
+├── utils/
+│   ├── content_analyzer.py     # AI content classification
+│   ├── persona_manager.py      # Persona data & chat agent
+│   ├── gap_analyzer.py         # Coverage gap detection
+│   ├── strategy_generator.py   # AI strategy recommendations
+│   ├── pdf_processor.py        # PDF text extraction
+│   └── web_scraper.py          # URL content extraction
+├── components/
+│   ├── upload_section.py       # File/URL upload UI
+│   ├── analysis_dashboard.py   # Results visualization
+│   ├── gap_matrix.py           # Gap heatmap & charts
+│   ├── persona_chat.py         # Chat interface
+│   └── strategy_view.py        # Strategy recommendations UI
+└── data/                       # Data storage
+```
 
 ## 🔧 Configuration
 
 Edit `config.py` to customize:
 
+- **MODEL_NAME**: Change to `gpt-4o-mini` for lower costs
+- **DEFAULT_PERSONAS**: Pre-configured personas
+- **FUNNEL_STAGES**: Customer journey stages
+- **SCORING_THRESHOLDS**: Gap analysis thresholds
+
+## 💰 Cost Considerations
+
+- **gpt-4o**: Best quality, higher cost (~$5-15 per 1M tokens)
+- **gpt-4o-mini**: Good quality, lower cost (~$0.15-0.60 per 1M tokens)
+
+Change the model in `config.py`:
 ```python
-# Default personas (overridden by uploads)
-DEFAULT_PERSONAS = ["CMO", "VP Marketing", "Content Manager"]
-
-# Funnel stages
-FUNNEL_STAGES = {
-    "awareness": "Top of funnel - problem recognition",
-    "consideration": "Middle of funnel - solution evaluation", 
-    "decision": "Bottom of funnel - purchase decision"
-}
-
-# Content types
-CONTENT_TYPES = ["blog", "case_study", "whitepaper", "email", "video", "webinar"]
+MODEL_NAME = "gpt-4o-mini"  # For lower costs
 ```
-
-## 📊 Output Examples
-
-### Content Analysis Report
-
-| Asset | Type | Persona | Stage | Intent | Score |
-|-------|------|---------|-------|--------|-------|
-| Blog: AI in Marketing | Blog | CMO | Awareness | Educational | 85% |
-| Case Study: Acme Corp | Case Study | VP Marketing | Decision | Proof | 92% |
-
-### Gap Matrix
-
-|  | Awareness | Consideration | Decision |
-|--|-----------|---------------|----------|
-| CMO | ✅ Strong | ⚠️ Moderate | ❌ Gap |
-| VP Marketing | ⚠️ Moderate | ✅ Strong | ✅ Strong |
-| Developer | ❌ Gap | ❌ Gap | ⚠️ Moderate |
-
-## 🛠️ Technical Details
-
-- **Framework**: Streamlit
-- **AI Model**: Claude (Anthropic API)
-- **PDF Processing**: pdfplumber, pypdf
-- **Web Scraping**: BeautifulSoup, requests
-- **Visualization**: Plotly, Altair
 
 ## 📝 License
 
-MIT License - See LICENSE file for details.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Submit a pull request
-
-## 📧 Support
-
-For questions or issues, please open a GitHub issue.
+MIT License
